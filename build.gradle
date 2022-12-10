@@ -1,0 +1,122 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'signing'
+    id 'jacoco'
+    id 'com.github.kt3k.coveralls' version '2.12.0'
+}
+
+group = 'io.github.lambig'
+archivesBaseName = 'TextEscape'
+version = '0.1.0'
+
+sourceCompatibility = 1.11
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.projectlombok:lombok:1.18.24'
+    annotationProcessor 'org.projectlombok:lombok:1.18.24'
+
+    testImplementation 'org.projectlombok:lombok:1.18.24'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.6.2'
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.6.2'
+    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.16.1'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+}
+
+tasks.register('javadocJar', Jar) {
+    dependsOn classes
+    archiveClassifier.set('javadoc')
+    from sourceSets.main.output
+}
+
+tasks.register('sourcesJar', Jar) {
+    dependsOn classes
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives javadocJar, sourcesJar
+}
+
+test {
+    useJUnitPlatform()
+    test.outputs.upToDateWhen {true}
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled(true)
+        html.enabled(true)
+    }
+}
+
+coveralls {
+    jacocoReportPath 'build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
+}
+
+java {
+    withJavadocJar()
+    withSourcesJar()
+}
+//publishing {
+//    publications {
+//        mavenJava(MavenPublication) {
+//            artifactId = 'TextEscape'
+//            from components.java
+//            pom {
+//                name = 'TextEscape'
+//                description = 'easy textEscape-like class implementation'
+//                url = 'https://github.com/lambig/TextEscape'
+//                licenses {
+//                    license {
+//                        name = 'MIT License'
+//                        url = 'https://opensource.org/licenses/MIT'
+//                    }
+//                }
+//                developers {
+//                    developer {
+//                        id = 'lambig'
+//                        name = 'Lambig'
+//                        email = 'ceolnua51@gmail.com'
+//                    }
+//                }
+//                scm {
+//                    connection = 'scm:git:https://github.com/lambig/TextEscape'
+//                    url = 'https://github.com/lambig/TextEscape'
+//                }
+//            }
+//        }
+//    }
+//    repositories {
+//        maven {
+//            name = "OSSRH"
+//            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+//            credentials {
+//                username = ossrhUsername
+//                password = ossrhPassword
+//            }
+//        }
+////        maven {
+////            name = "OSSRH_SNAPSHOT"
+////            url = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
+////            credentials {
+////                username = ossrhUsername
+////                password = ossrhPassword
+////            }
+////        }
+//
+//    }
+//}
+//
+//signing {
+//    sign publishing.publications.mavenJava
+//}

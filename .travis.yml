@@ -1,0 +1,13 @@
+sudo: required
+language: java
+install: gradle assemble
+jdk:
+  - openjdk8
+  - openjdk11
+git:
+  depth: 25
+  quiet: true
+before_install:
+  - chmod +x gradlew
+after_success:
+  - ./gradlew jacocoTestReport coveralls
