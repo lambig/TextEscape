@@ -14,6 +14,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.Accessors;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toSet;
 
@@ -72,7 +73,7 @@ public class TextEscape {
         if (unescapedPattern.matcher(stringValue).find()) {
             throw new IllegalArgumentException("エスケープされていない置換対象文字列が置換後の値として渡されました: " + stringValue);
         }
-        variables.put(key, String.valueOf(value));
+        this.variables.put(key, String.valueOf(value));
         return this;
     }
 
@@ -117,10 +118,10 @@ public class TextEscape {
      * @throws NoSuchElementException variableNameに対応する値がwhereで宣言されていない場合
      */
     public String compile() {
-        String text = texts.stream().collect(joining(this.delimiter));
+        String text = this.texts.stream().collect(joining(this.delimiter));
         Set<String> keysInText = extractKeysFromText(text);
         Set<String> missingKeys = keysInText.stream()
-                .filter(key -> !variables.containsKey(key))
+                .filter(not(this.variables::containsKey))
                 .collect(toSet());
 
         Optional.ofNullable(defaultValue)
