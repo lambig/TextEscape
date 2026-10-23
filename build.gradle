@@ -32,9 +32,9 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 tasks.register('javadocJar', Jar) {
-    dependsOn classes
+    dependsOn javadoc
     archiveClassifier.set('javadoc')
-    from sourceSets.main.output
+    from javadoc.destinationDir
 }
 
 tasks.register('sourcesJar', Jar) {
