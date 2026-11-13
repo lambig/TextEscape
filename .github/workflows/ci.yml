@@ -14,9 +14,13 @@ concurrency:
 
 jobs:
   verify:
-    name: Java 11 tests and documentation
+    name: Java ${{ matrix.java }} contract and consumers
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        java: ['11', '25']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -24,16 +28,20 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
-          java-version: '11'
-      - name: Test and build documentation with the pinned Wrapper
-        run: bash ./gradlew --no-daemon --console=plain clean test javadocJar sourcesJar jacocoTestReport
-      - name: Verify documentation archive contents
-        run: python3 .github/scripts/check-documentation.py
-      - name: Preserve test reports and documentation
+          java-version: ${{ matrix.java }}
+      - name: Select test runtime
+        run: echo "TEST_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify library, API compatibility and independent consumers
+        run: sh ./verify-consumers.sh candidate
+      - name: Preserve test reports, coverage and documentation
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
-          name: java-11-verification
+          name: java-${{ matrix.java }}-verification
           retention-days: 14
           path: |
             build/test-results/test/
@@ -41,3 +49,5 @@ jobs:
             build/reports/jacoco/
             build/libs/*-javadoc.jar
             build/libs/*-sources.jar
+            build/consumer-results/
+            build/compatibility/*-api.txt

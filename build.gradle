@@ -3,120 +3,125 @@ plugins {
     id 'maven-publish'
     id 'signing'
     id 'jacoco'
-    id 'com.github.kt3k.coveralls' version '2.12.0'
 }
 
 group = 'io.github.lambig'
-archivesBaseName = 'TextEscape'
-version = '0.1.0'
+version = '0.1.1'
 
-sourceCompatibility = 1.11
-
-repositories {
-    mavenCentral()
-}
+repositories { mavenCentral() }
 
 dependencies {
-    implementation 'org.projectlombok:lombok:1.18.24'
-    annotationProcessor 'org.projectlombok:lombok:1.18.24'
-
-    testImplementation 'org.projectlombok:lombok:1.18.24'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.24'
-    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.6.2'
-    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.6.2'
-    testImplementation group: 'org.assertj', name: 'assertj-core', version: '3.16.1'
-}
-
-tasks.withType(JavaCompile).configureEach {
-    options.encoding = "UTF-8"
-}
-
-tasks.register('javadocJar', Jar) {
-    dependsOn javadoc
-    archiveClassifier.set('javadoc')
-    from javadoc.destinationDir
-}
-
-tasks.register('sourcesJar', Jar) {
-    dependsOn classes
-    archiveClassifier.set('sources')
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives javadocJar, sourcesJar
-}
-
-test {
-    useJUnitPlatform()
-    test.outputs.upToDateWhen {true}
-}
-
-jacocoTestReport {
-    reports {
-        xml.enabled(true)
-        html.enabled(true)
-    }
-}
-
-coveralls {
-    jacocoReportPath 'build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml'
+    compileOnly 'org.projectlombok:lombok:1.18.42'
+    annotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testCompileOnly 'org.projectlombok:lombok:1.18.42'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'org.assertj:assertj-core:3.23.1'
 }
 
 java {
-    withJavadocJar()
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
     withSourcesJar()
+    withJavadocJar()
 }
-//publishing {
-//    publications {
-//        mavenJava(MavenPublication) {
-//            artifactId = 'TextEscape'
-//            from components.java
-//            pom {
-//                name = 'TextEscape'
-//                description = 'easy textEscape-like class implementation'
-//                url = 'https://github.com/lambig/TextEscape'
-//                licenses {
-//                    license {
-//                        name = 'MIT License'
-//                        url = 'https://opensource.org/licenses/MIT'
-//                    }
-//                }
-//                developers {
-//                    developer {
-//                        id = 'lambig'
-//                        name = 'Lambig'
-//                        email = 'ceolnua51@gmail.com'
-//                    }
-//                }
-//                scm {
-//                    connection = 'scm:git:https://github.com/lambig/TextEscape'
-//                    url = 'https://github.com/lambig/TextEscape'
-//                }
-//            }
-//        }
-//    }
-//    repositories {
-//        maven {
-//            name = "OSSRH"
-//            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-//            credentials {
-//                username = ossrhUsername
-//                password = ossrhPassword
-//            }
-//        }
-////        maven {
-////            name = "OSSRH_SNAPSHOT"
-////            url = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-////            credentials {
-////                username = ossrhUsername
-////                password = ossrhPassword
-////            }
-////        }
-//
-//    }
-//}
-//
-//signing {
-//    sign publishing.publications.mavenJava
-//}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+    options.encoding = 'UTF-8'
+}
+tasks.withType(Javadoc).configureEach { options.encoding = 'UTF-8' }
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    if (providers.environmentVariable('TEST_JAVA_HOME').isPresent()) {
+        executable = providers.environmentVariable('TEST_JAVA_HOME').get() + '/bin/java'
+    }
+}
+tasks.withType(Jar).configureEach { from('LICENSE') { into 'META-INF' } }
+
+jacoco { toolVersion = '0.8.14' }
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            pom {
+                name = 'TextEscape'
+                description = 'Literal placeholder substitution for Java 11.'
+                url = 'https://github.com/lambig/TextEscape'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers { developer { id = 'lambig'; name = 'Lambig' } }
+                scm {
+                    connection = 'scm:git:https://github.com/lambig/TextEscape.git'
+                    developerConnection = 'scm:git:ssh://git@github.com/lambig/TextEscape.git'
+                    url = 'https://github.com/lambig/TextEscape'
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'Candidate'
+            url = layout.buildDirectory.dir('repository')
+        }
+    }
+}
+
+// 署名鍵は公開用bundleの生成時だけ環境から受け取る。
+def releaseBundle = providers.gradleProperty('releaseBundle').isPresent()
+signing {
+    required = releaseBundle
+    if (releaseBundle) {
+        if (providers.environmentVariable('SIGNING_KEY').isPresent()) {
+            useInMemoryPgpKeys(providers.environmentVariable('SIGNING_KEY').get(),
+                    providers.environmentVariable('SIGNING_PASSWORD').orNull)
+        }
+        sign publishing.publications.mavenJava
+    }
+}
+
+tasks.register('centralBundle', Zip) {
+    dependsOn 'publishMavenJavaPublicationToCandidateRepository'
+    archiveFileName = "${project.name}-${project.version}-central.zip"
+    destinationDirectory = layout.buildDirectory.dir('central')
+    from(layout.buildDirectory.dir('repository')) {
+        include "io/github/lambig/${project.name}/${project.version}/*.jar*"
+        include "io/github/lambig/${project.name}/${project.version}/*.pom*"
+        include "io/github/lambig/${project.name}/${project.version}/*.module*"
+    }
+    doFirst {
+        if (!releaseBundle) throw new GradleException('centralBundle requires -PreleaseBundle and signing credentials')
+        ['.jar', '-sources.jar', '-javadoc.jar', '.pom', '.module'].each { suffix ->
+            def signature = layout.buildDirectory.file("repository/io/github/lambig/${project.name}/${project.version}/${project.name}-${project.version}${suffix}.asc").get().asFile
+            if (!signature.isFile()) throw new GradleException("Missing signature: ${signature.name}")
+        }
+    }
+}
+
+// 生成される公開アクセサもAPI文書に含める。
+def delombokOutput = layout.buildDirectory.dir('delombok')
+tasks.register('delombok', JavaExec) {
+    classpath = configurations.annotationProcessor
+    mainClass = 'lombok.launch.Main'
+    inputs.dir 'src/main/java'
+    outputs.dir delombokOutput
+    args 'delombok', 'src/main/java', '-d', delombokOutput.get().asFile.absolutePath,
+            '--classpath', sourceSets.main.compileClasspath.asPath, '--encoding', 'UTF-8'
+}
+tasks.named('javadoc') {
+    dependsOn 'delombok'
+    source = fileTree(delombokOutput) { include '**/*.java' }
+}
