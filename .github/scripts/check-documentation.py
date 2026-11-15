@@ -16,3 +16,9 @@ for classifier, suffix in (("javadoc", ".html"), ("sources", ".java")):
             f"found {content} and {bytecode}"
         )
     print(f"{archives[0]}: {suffix}={content}, .class={bytecode}")
+
+with ZipFile(next(Path('build/libs').glob('*-javadoc.jar'))) as archive:
+    html = archive.read('io/github/lambig/textescape/TextEscape.html').decode('utf-8')
+    assert 'id="setDelimiter(java.lang.String)"' in html
+    assert 'テンプレート' in html
+print('Delimiter method and Japanese API descriptions: present')

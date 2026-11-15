@@ -1,0 +1,36 @@
+plugins { id 'java' }
+
+repositories {
+    if (providers.gradleProperty('candidateRepository').isPresent()) {
+        exclusiveContent {
+            forRepository {
+                maven {
+                    url = uri(providers.gradleProperty('candidateRepository').get())
+                }
+            }
+            filter { includeModule('io.github.lambig', 'TextEscape') }
+        }
+    }
+    mavenCentral()
+}
+dependencies {
+    implementation "io.github.lambig:TextEscape:${providers.gradleProperty('libraryVersion').getOrElse('0.1.1')}"
+}
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+    options.encoding = 'UTF-8'
+}
+tasks.register('runExample', JavaExec) {
+    dependsOn 'classes'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'example.TextEscapeExample'
+    if (providers.environmentVariable('TEST_JAVA_HOME').isPresent()) {
+        executable = providers.environmentVariable('TEST_JAVA_HOME').get() + '/bin/java'
+    }
+    doFirst {
+        def jars = configurations.runtimeClasspath.files
+        if (jars*.name.sort() != ["TextEscape-${providers.gradleProperty('libraryVersion').getOrElse('0.1.1')}.jar".toString()].sort()) {
+            throw new GradleException("Unexpected runtime dependencies: ${jars*.name}")
+        }
+    }
+}
