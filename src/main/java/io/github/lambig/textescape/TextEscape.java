@@ -31,6 +31,9 @@ public class TextEscape {
      */
     private static final Pattern unescapedPattern = Pattern.compile("(?<!\\\\)\\$\\{([^}]*)\\}");
 
+    /** 完全なトークンと、その直前のエスケープを一緒に読み取るパターン。 */
+    private static final Pattern tokenPattern = Pattern.compile("(\\\\)?\\$\\{([^}]*)\\}");
+
     /**
      * 元の文字列(複数可)
      */
@@ -130,7 +133,9 @@ public class TextEscape {
      * escapeで与えていた文字列をdelimiterで連接し、
      * ${variableName}をwhereでvariableNameに対して宣言した値で置換します。
      * \${variableName}とバックスラッシュでエスケープすると置換せずに${variableName}として出力します。
-     * エスケープしたトークンには変数登録が不要です。値に含まれるエスケープも出力時に外します。
+     * エスケープしたトークンには変数登録が不要です。元の本文と各置換値・既定値にある、
+     * 閉じ波括弧まで揃ったエスケープ済みトークンからだけバックスラッシュを一つ外します。
+     * 閉じ波括弧のない文字列と、置換で新しく生じた境界の並びはそのまま保持します。
      * キーは次の閉じ波括弧までの文字列で、空キーも扱えます。
      * 挿入した値や、値と隣接文字から生じたトークンは再走査しません。
      * この操作は設定を変更せず、同じ設定では繰り返しても同じ結果になります。
@@ -149,9 +154,13 @@ public class TextEscape {
         if (defaultValue == null && !missingKeys.isEmpty()) {
             throw new NoSuchElementException("次のキーが変数マップに見つかりませんでした: " + String.join(", ", missingKeys));
         }
-        return unescapedPattern.matcher(text)
-                .replaceAll(match -> Matcher.quoteReplacement(variables.getOrDefault(match.group(1), defaultValue)))
-                .replace("\\${", "${");
+        return tokenPattern.matcher(text)
+                .replaceAll(match -> {
+                    String replacement = match.group(1) != null
+                            ? match.group().substring(1)
+                            : unescapeTokens(variables.getOrDefault(match.group(2), defaultValue));
+                    return Matcher.quoteReplacement(replacement);
+                });
     }
 
     /**
@@ -165,9 +174,16 @@ public class TextEscape {
     }
 
     private Set<String> extractKeysFromText(String text) {
-        return unescapedPattern.matcher(text)
+        return tokenPattern.matcher(text)
                 .results()
-                .map(match -> match.group(1))
+                .filter(match -> match.group(1) == null)
+                .map(match -> match.group(2))
                 .collect(toSet());
+    }
+
+    private String unescapeTokens(String value) {
+        return tokenPattern.matcher(value)
+                .replaceAll(match -> Matcher.quoteReplacement(
+                        match.group(1) != null ? match.group().substring(1) : match.group()));
     }
 }

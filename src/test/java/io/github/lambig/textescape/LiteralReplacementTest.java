@@ -67,6 +67,43 @@ class LiteralReplacementTest {
     }
 
     @Test
+    void replacementBoundariesPreserveBackslash() {
+        assertThat(escape("${a}${b}").where("a", "\\").where("b", "${open").compile())
+                .isEqualTo("\\${open");
+        assertThat(escape("${a}${b}${c}").where("a", "\\").where("b", "${open")
+                .where("c", "}").compile()).isEqualTo("\\${open}");
+    }
+
+    @Test
+    void incompleteTemplateTokenRemainsLiteral() {
+        assertThat(escape("\\${unfinished").compile()).isEqualTo("\\${unfinished");
+    }
+
+    @Test
+    void incompleteValuesAndDefaultsRemainLiteral() {
+        assertThat(escape("${a}").where("a", "\\${unfinished").compile())
+                .isEqualTo("\\${unfinished");
+        assertThat(escape("${missing}").setDefaultValue("\\${unfinished").compile())
+                .isEqualTo("\\${unfinished");
+        assertThat(escape("${a}").where("a", "\\\\${complete}").compile())
+                .isEqualTo("\\${complete}");
+    }
+
+    @Test
+    void replacementAndTemplateBoundariesRemainLiteral() {
+        assertThat(escape("${a}${unfinished").where("a", "\\").compile())
+                .isEqualTo("\\${unfinished");
+        assertThat(escape("${a}name}").where("a", "\\${").compile())
+                .isEqualTo("\\${name}");
+    }
+
+    @Test
+    void defaultBoundaryRemainsLiteral() {
+        assertThat(escape("${a}${missing}").where("a", "\\").setDefaultValue("${open").compile())
+                .isEqualTo("\\${open");
+    }
+
+    @Test
     void nullInputsAreRejected() {
         assertThatThrownBy(() -> escape((String[]) null)).isInstanceOf(NullPointerException.class);
         assertThatThrownBy(() -> escape("a", null)).isInstanceOf(NullPointerException.class);
