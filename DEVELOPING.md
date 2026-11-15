@@ -31,8 +31,8 @@ java -cp "example/target/classes:$(cat example/target/runtime-classpath.txt)" ex
 ```
 
 期待出力はREADMEの利用例に記載しています。
-0.1.1公開後は次のコマンドで、候補リポジトリを使わず同じ例を実行できます。
-現在の0.1.1は未公開の候補です。
+公開済みの0.1.1は次のコマンドで、Maven Centralから取得して同じ例を実行できます。
+Maven／Gradleごとに空の依存キャッシュを用意し、READMEのソース・期待出力との一致も確認します。
 
 ```sh
 sh ./verify-consumers.sh public 0.1.1

@@ -6,7 +6,7 @@ Javaの文字列中にある ${key} を、名前に対応する値へ置き換�
 
 ## 導入
 
-以下は **0.1.1候補版** の依存宣言です。Maven Centralへの公開はまだ行っていません。候補版を試すときは、このリポジトリの `sh ./verify-consumers.sh candidate` を実行してください。
+**0.1.1** は[Maven Central](https://repo.maven.apache.org/maven2/io/github/lambig/TextEscape/0.1.1/)から利用できます。以下の依存宣言を追加してください。公開版の導入確認は、このリポジトリの `sh ./verify-consumers.sh public 0.1.1` で実行できます。
 
 Maven:
 
@@ -91,4 +91,4 @@ missing key rejected
 
 0.1.1では、置換値のドル記号・バックスラッシュとキーの正規表現記号を文字として処理します。エスケープされた未定義トークンを拒否する問題、compileが既定値をキー登録へ書き戻す問題、オブジェクト値の変換を二度行う問題も修正します。旧版の誤動作に依存した結果は変わります。再帰展開・式評価を追加するものではありません。
 
-API説明は[公開ソース](src/main/java/io/github/lambig/textescape/TextEscape.java)と、候補buildで生成する `build/docs/javadoc/index.html` にあります。sources/Javadoc JAR、検証と公開用bundleは[DEVELOPING.md](DEVELOPING.md)を参照してください。不具合・質問は[Issues](https://github.com/lambig/TextEscape/issues)へお願いします。
+API説明は[公開ソース](src/main/java/io/github/lambig/textescape/TextEscape.java)と、[0.1.1のJavadoc JAR](https://repo.maven.apache.org/maven2/io/github/lambig/TextEscape/0.1.1/TextEscape-0.1.1-javadoc.jar)にあります。ローカルbuildでも `build/docs/javadoc/index.html` を生成します。sources/Javadoc JAR、検証と公開用bundleは[DEVELOPING.md](DEVELOPING.md)を参照してください。不具合・質問は[Issues](https://github.com/lambig/TextEscape/issues)へお願いします。
