@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['11', '25']
+        java: ['11.0.33.1+1', '25.0.5.1+2']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
@@ -28,13 +28,15 @@ jobs:
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
+          check-latest: true
           java-version: ${{ matrix.java }}
       - name: Select test runtime
         run: echo "TEST_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
       - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6
         with:
           distribution: temurin
-          java-version: '17'
+          check-latest: true
+          java-version: '17.0.21.1+2'
       - name: Verify library, API compatibility and independent consumers
         run: sh ./verify-consumers.sh candidate
       - name: Preserve test reports, coverage and documentation
